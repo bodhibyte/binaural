@@ -1719,131 +1719,6 @@ sbagen_get_error(void)
     return error_message;
 }
 
-#ifdef BUILD_JNI
-
-#include <assert.h>
-#include <jni.h>
-#include <android/log.h>
-#include "tmp/sbagen.h"
-
-static void
-die(JNIEnv *env, char c)
-{
-    jclass e;
-    char *cl;
-
-    if((*env)->ExceptionOccurred(env))
-	return;
-    cl =
-	c == 'M' ? "java/lang/OutOfMemoryError" :
-	c == 'A' ? "java/lang/IllegalArgumentException" :
-	NULL;
-    e = (*env)->FindClass(env, cl);
-    (*env)->ThrowNew(env, e, sbagen_get_error());
-}
-
-void
-Java_org_cigaes_binaural_1player_Binaural_1decoder_sbagen_1init(
-    JNIEnv *env, jobject self)
-{
-    setbuf(stdout, NULL);
-    setbuf(stderr, NULL);
-    if(sbagen_init() < 0) {
-	die(env, 'M');
-	return;
-    }
-}
-
-void
-Java_org_cigaes_binaural_1player_Binaural_1decoder_sbagen_1set_1parameters(
-    JNIEnv *env, jobject self,
-    jint rate, jint prate, jint fade, jstring jroll)
-{
-    const char *roll;
-    int r;
-
-    if(jroll == NULL) {
-	roll = NULL;
-    } else {
-	if((roll = (*env)->GetStringUTFChars(env, jroll, NULL)) == NULL)
-	    return;
-    }
-    r = sbagen_set_parameters(rate, prate, fade, roll);
-    if(roll != NULL)
-	(*env)->ReleaseStringUTFChars(env, jroll, roll);
-    if(r < 0)
-	die(env, 'A');
-}
-
-void
-Java_org_cigaes_binaural_1player_Binaural_1decoder_sbagen_1exit(
-    JNIEnv *env, jobject self)
-{
-    sbagen_exit();
-}
-
-void
-Java_org_cigaes_binaural_1player_Binaural_1decoder_sbagen_1parse_1seq(
-    JNIEnv *env, jobject self, jstring jseq)
-{
-    const char *seq;
-    int r;
-
-    if((seq = (*env)->GetStringUTFChars(env, jseq, NULL)) == NULL)
-	return;
-    r = sbagen_parse_seq(seq);
-    (*env)->ReleaseStringUTFChars(env, jseq, seq);
-    if(r < 0)
-	die(env, 'A');
-}
-
-void
-Java_org_cigaes_binaural_1player_Binaural_1decoder_sbagen_1free_1seq(
-    JNIEnv *env, jobject self)
-{
-    sbagen_free_seq();
-}
-
-static JNIEnv *output_env;
-static jobject output_self;
-static jmethodID output_method;
-
-static int
-writeOut(char *buf, int siz)
-{
-    jshortArray *a;
-    int r = 0;
-
-    siz /= 2;
-    if((a = (*output_env)->NewShortArray(output_env, siz)) == NULL)
-	return(-1);
-    (*output_env)->SetShortArrayRegion(output_env, a, 0, siz, (jshort *)buf);
-    (*output_env)->CallVoidMethod(output_env, output_self, output_method, a);
-    if((*output_env)->ExceptionOccurred(output_env))
-	r = -1;
-    (*output_env)->DeleteLocalRef(output_env, a);
-    return(r);
-}
-
-void
-Java_org_cigaes_binaural_1player_Binaural_1decoder_sbagen_1run(
-    JNIEnv *env, jobject self)
-{
-    jclass class;
-
-    __android_log_print(ANDROID_LOG_INFO, "sbagen", "sbagen started");
-    output_env = env;
-    output_self = self;
-    class = (*env)->GetObjectClass(env, self);
-    output_method = (*env)->GetMethodID(env, class, "out", "([S)V");
-    assert(output_method != NULL);
-    if(sbagen_run() < 0)
-	die(env, 'A');
-    __android_log_print(ANDROID_LOG_INFO, "sbagen", "sbagen finished");
-}
-
-#elif BUILD_STANDALONE_TEST
-
 static int
 writeOut(char *buf, int siz) {
     int rv;
@@ -1855,6 +1730,12 @@ writeOut(char *buf, int siz) {
     error("Output error");
     return(-1);
 }
+
+#ifdef BUILD_EMSCRIPTEN
+
+#include <emscripten.h>
+
+#elif BUILD_STANDALONE_TEST
 
 int 
 main(int argc, char **argv)
