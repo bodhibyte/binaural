@@ -1722,12 +1722,21 @@ sbagen_get_error(void)
 static int
 writeOut(char *buf, int siz) {
     int rv;
+     FILE *f = fopen("test.wav", "wb");
+  if (f == NULL) {
+      printf("Error opening file!\n");
+      exit(1);
+  }
 
-    while (-1 != (rv= write(out_fd, buf, siz))) {
-	if (0 == (siz -= rv)) return 0;
+    while (-1 != (rv= fwrite(buf,siz,1,f))) {
+	if (0 == (siz -= rv)) {
+    fclose(f);
+    return 0;
+  }
 	buf += rv;
     }
     error("Output error");
+    fclose(f);
     return(-1);
 }
 

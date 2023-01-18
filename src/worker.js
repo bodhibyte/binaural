@@ -7,18 +7,29 @@ function onModuleReady(SBAGEN) {
       var args = data.arguments;
 
     if (func === 'start') {
-      start(SBAGEN,args[0]);
+      start(SBAGEN,args[0],args[1]);
+    }
+
+    if (func === 'stop') {
+      stop(SBAGEN);
     }
   }
 };
 
-function start(SBAGEN,sequence) {
+function start(SBAGEN,sequence,buffer) {
   var rate = 44100;
   var init = SBAGEN._sbagen_init();
   var parameters = SBAGEN._sbagen_set_parameters(rate, 0, 0, null);
   var sequence = SBAGEN._sbagen_parse_seq(sequence);
   var run = SBAGEN._sbagen_run();
+  SBAGEN.sbagen_free_seq();
+	SBAGEN.sbagen_exit();
 }
+function stop(SBAGEN) {
+  SBAGEN.sbagen_free_seq();
+	SBAGEN.sbagen_exit();
+}
+
 
 function onError(err) {
   return postMessage({

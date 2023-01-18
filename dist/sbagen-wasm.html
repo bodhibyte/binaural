@@ -11,13 +11,17 @@
 
 <body>
   <button id="play-button">Play</button>
+  <button id="stop-button">Stop</button>
 </body>
 
 <script type="text/javascript">
 
 var playButton = document.getElementById("play-button");
+var stopButton = document.getElementById("stop-button");
 
 playButton.addEventListener("click", function() {
+      buffer = new SharedArrayBuffer(16);
+
       var sequence = `
       ts: 100+0/10 302+4/10 500+0/10
       all-off: -
@@ -33,7 +37,14 @@ playButton.addEventListener("click", function() {
       // Send a message to the worker to call the sbagen_run function
       worker.postMessage({
         'function': 'start',
-        'arguments': [sequence]
+        'arguments': [sequence,buffer]
+      });
+  });
+
+  stopButton.addEventListener("click", function() {
+      // Send a message to the worker to call the sbagen_run function
+      worker.postMessage({
+        'function': 'stop'
       });
   });
 

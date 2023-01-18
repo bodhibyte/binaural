@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script type="text/javascript">
+    
+    
+    
+  </script>
+</head>
+
+<body>
+  <button id="play-button">Play</button>
+  <button id="stop-button">Stop</button>
+</body>
+
+<script type="text/javascript">
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let leftOscillator;
+let rightOscillator;
+
+
+
+var playButton = document.getElementById("play-button");
+var stopButton = document.getElementById("stop-button");
+
+playButton.addEventListener("click", function() {
+  leftOscillator = audioCtx.createOscillator();
+    leftOscillator.type = 'sine';
+    leftOscillator.frequency.value = 440;
+    leftOscillator.start();
+
+    rightOscillator = audioCtx.createOscillator();
+    rightOscillator.type = 'sine';
+    rightOscillator.frequency.value = 450;
+    rightOscillator.start();
+
+    // create panner nodes
+    const leftPanner = audioCtx.createStereoPanner();
+    leftPanner.pan.value = -1; // set to full left
+    leftOscillator.connect(leftPanner).connect(audioCtx.destination);
+
+    const rightPanner = audioCtx.createStereoPanner();
+    rightPanner.pan.value = 1; // set to full right
+    rightOscillator.connect(rightPanner).connect(audioCtx.destination);
+
+  });
+
+  stopButton.addEventListener("click", function() {
+    leftOscillator.stop();
+    rightOscillator.stop();
+  });
+
+</script>
+
+</html>

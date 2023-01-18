@@ -79,6 +79,7 @@ dist/worker.sbagen-wasm.js: dist/sbagen-wasm.js src/worker.js
 
 out/sbagen.bc: sbagen-src/
 	cp src/sbagen-wasm.html dist/sbagen-wasm.html
+	cp src/runhttp.py dist/runhttp.py
 	mkdir -p out
 	# Generate llvm bitcode
 	$(EMCC) $(SBAGEN_COMPILATION_FLAGS) -c sbagen-src/sbagen.c -o $@
